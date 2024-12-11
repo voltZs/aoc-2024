@@ -58,14 +58,14 @@ def traverse(position):
             result += traverse_result
         return result
 
-total_score = 0
-for trailhead in trailheads:
-    peaks = set()
-    for trail_end in traverse(((trailhead), 0)):
-        peaks.add(trail_end[0])
-    total_score += len(peaks)
-
-print(total_score)
+# total_score = 0
+# for trailhead in trailheads:
+#     peaks = set()
+#     for trail_end in traverse(((trailhead), 0)):
+#         peaks.add(trail_end[0])
+#     total_score += len(peaks)
+#
+# print(total_score)
 
 print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
 
