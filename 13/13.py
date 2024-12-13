@@ -89,6 +89,32 @@ for game in games:
 print(total_1)
 
 print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
+addition = 10000000000000
+
+def calculate_game_2(game):
+    a_x = game["a_x"]
+    b_x = game["b_x"]
+    prize_x = game["prize_x"] + addition
+
+    a_y = game["a_y"]
+    b_y = game["b_y"]
+    prize_y = game["prize_y"] + addition
+
+    determinant = a_x * b_y - b_x * a_y
+    a_num = (prize_x * b_y - prize_y * b_x)
+    b_num = (prize_x * a_y - prize_y * a_x)
+
+    if determinant == 0 or a_num % determinant != 0 or b_num % determinant != 0:
+        return 0
+
+    a, b = int(a_num / determinant), int(-b_num / determinant)
+    return 3 * a + b
+
+# Main
+total_2 = 0
+for game in games:
+    total_2 += calculate_game_2(game)
+print(total_2)
 
 # Save timestamp
 end = time.time()
