@@ -2,7 +2,7 @@ import time
 import math
 from enum import Enum
 
-file = open("example.txt", "r")
+file = open("input.txt", "r")
 start = time.time()
 
 line_type = 0
@@ -30,39 +30,58 @@ for line in file.readlines():
     line_type += 1
 
 print("~~~~~~~~~~RESULT 1~~~~~~~~~~")
-def get_valid_ab_combinations(a, b, prize):
-    gcd = math.gcd(a, b)
-
-    combinations = []
-
+def combination_if_valid(b_presses, a, b, prize, gcd):
     if prize % gcd != 0:
-        return combinations
+        return None
 
-    for a_presses in range(101):
-        a_total = a * a_presses
-        if a_total > prize:
+    b_total = b * b_presses
+    if b_total > prize:
+        return None
+
+    a_target = prize - b_total
+    if a_target % a == 0:
+        a_presses = int(a_target/a)
+        return (a_presses, b_presses)
+    else:
+        return None
+
+def get_cheapest_ab_combination(game):
+    a_x = game["a_x"]
+    b_x = game["b_x"]
+    prize_x = game["prize_x"]
+    gcd_x = math.gcd(a_x, b_x)
+
+    a_y = game["a_y"]
+    b_y = game["b_y"]
+    prize_y = game["prize_y"]
+    gcd_y = math.gcd(a_y, b_y)
+
+    # X or Y don't have a GCD - there will be no solution
+    if prize_x % gcd_x != 0 or prize_y % gcd_y != 0:
+        return None
+
+    # Going from highest possible B presses cause A cost more
+    max_x_b_presses = math.ceil(prize_x/b_x)
+    max_y_b_presses = math.ceil(prize_y/b_y)
+    max_b_presses = min([max_x_b_presses, max_y_b_presses])
+
+    b_presses = max_b_presses
+    while b_presses >= 0 :
+        x_combination = combination_if_valid(b_presses, a_x, b_x, prize_x, gcd_x)
+        y_combination = combination_if_valid(b_presses, a_y, b_y, prize_y, gcd_y)
+
+        if x_combination == None or y_combination == None or x_combination != y_combination:
+            b_presses -= 1
             continue
-        b_target = prize - a_total
-
-        if b_target % b == 0:
-            b_presses = int(b_target/b)
-            if b_presses > 100:
-                continue
-            combinations.append((a_presses, b_presses))
-    return combinations
-
-def get_valid_game_combinations(game):
-    x_combinations = get_valid_ab_combinations(game["a_x"], game["b_x"], game["prize_x"])
-    y_combinations = get_valid_ab_combinations(game["a_y"], game["b_y"], game["prize_y"])
-
-    return list(set(x_combinations).intersection(set(y_combinations)))
+        else:
+            return x_combination # can return either, they are the same
+    return None
 
 def cheapest_or_zero(game):
-    combinations = get_valid_game_combinations(game)
-    if not combinations:
+    combination = get_cheapest_ab_combination(game)
+    if not combination:
         return 0
-    tokens = [(comb[0] * 3) + comb[1] for comb in combinations]
-    return min(tokens)
+    return (combination[0] * 3) + combination[1]
 
 total_1 = 0
 for game in games:
@@ -70,7 +89,6 @@ for game in games:
 print(total_1)
 
 print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
-
 
 # Save timestamp
 end = time.time()
