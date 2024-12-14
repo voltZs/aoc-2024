@@ -63,8 +63,10 @@ print("~~~~~~~~~~RESULT 1~~~~~~~~~~")
 # print(f"Safety factor: {quadrants[0]*quadrants[1]*quadrants[2]*quadrants[3]}")
 
 print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
-
-sleeps = 1
+repetition_cycle = space_width
+for robot in robots:
+    robot.move(4)
+sleeps = 4
 while True:
     matrix = []
     for y in range(space_height):
@@ -73,8 +75,9 @@ while True:
             line.append(".")
         matrix.append(line)
 
+    sleeps += repetition_cycle
     for robot in robots:
-        robot.move(1)
+        robot.move(repetition_cycle)
 
         matrix_value = matrix[robot.p_y][robot.p_x]
         if matrix_value == ".":
@@ -86,8 +89,7 @@ while True:
     print(f"--------------- SLEEPS: {sleeps} ----------------")
     for line in matrix:
         print("".join(line))
-    time.sleep(0.01)
-    sleeps+= 1
+    time.sleep(0.2)
 
 # Save timestamp
 end = time.time()
