@@ -286,7 +286,6 @@ def make_move(current_position, direction, matrix, boxes):
     if boxes_to_move is None:
         # Ran into wall
         return current_position
-    print(f"moving boxes: {sorted([box.id for box in boxes_to_move])}")
     for box in boxes_to_move:
         box.p = get_position_ahead(box.p, direction)
 
