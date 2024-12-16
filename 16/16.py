@@ -139,8 +139,6 @@ def a_star():
     open_list_weights[(start, start_direction)] = 0
 
     while open_list:
-        # print("------")
-        # print(f"OPEN: {open_list}")
         current = heapq.heappop(open_list)
         if open_list_weights.get((current.position, current.direction)):
             open_list_weights.pop((current.position, current.direction))
@@ -149,11 +147,8 @@ def a_star():
             return build_path(current)
 
         neighbors = get_neighbors(current.position)
-        # print(f"neighbors {neighbors}")
         for neighbor_position in neighbors:
-            # print(f"handling neighbor: {neighbor_position} | CURR position: {current.position} direction {current.direction}")
             distance_to_neighbor, new_direction = distance_and_direction(current.position, current.direction, neighbor_position)
-            # print(f"new direction {new_direction}")
             cost_so_far = current.cost_so_far + distance_to_neighbor
 
             existing = open_list_weights.get((neighbor_position, new_direction))
@@ -165,6 +160,13 @@ def a_star():
             open_list_weights[(neighbor_position, new_direction)] = cost_so_far
     return None
 
+print("~~~~~~~~~~RESULT 1~~~~~~~~~~")
+print(f"start: {start}")
+print(f"end: {goal}")
+a_best_path_length = a_star()[0].cost_so_far
+print(a_best_path_length)
+
+print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
 def find_all_paths_of_length(position, previous_position, direction, remaining_length):
     if previous_position is not None and position == previous_position:
         return None
@@ -187,15 +189,6 @@ def find_all_paths_of_length(position, previous_position, direction, remaining_l
         result.append(position)
         result.extend(path)
     return result
-
-print("~~~~~~~~~~RESULT 1~~~~~~~~~~")
-print_map()
-print(f"start: {start}")
-print(f"end: {goal}")
-a_best_path_length = a_star()[0].cost_so_far
-print(a_best_path_length)
-
-print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
 
 # Save timestamp
 end_time = time.time()
