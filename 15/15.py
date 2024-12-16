@@ -160,11 +160,6 @@ for direction in movements:
     current_position = result[0]
     current_matrix = result[1]
 
-# printable_matrix = copy_matrix(current_matrix)
-# printable_matrix[current_position[0]][current_position[1]] = "@"
-# for line in printable_matrix:
-#     print("".join([str(x) for x in line]).replace("0", ".").replace("1", "#").replace("2", "O"))
-
 gps_sum = 0
 for line_index, line in enumerate(current_matrix):
     for column_index, tile in enumerate(line):
@@ -173,6 +168,144 @@ for line_index, line in enumerate(current_matrix):
 print(f"GPS: {gps_sum}")
 
 print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
+class Position:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f"{self.__dict__}"
+
+
+class Box:
+    def __init__(self, position, width, height, id):
+        self.p = position
+        self.width = width
+        self.height = height
+        self.id = id
+
+    def __eq__(self, other):
+        return self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+
+    def __repr__(self):
+        return f"{self.__dict__}"
+
+
+def import_boxes(matrix_string):
+    boxes = []
+    for line_index, line in enumerate(matrix_string.split("\n")):
+        column_index = 0
+        while column_index < len(line):
+            if line[column_index] == "[":
+                boxes.append(Box(Position(column_index, line_index), 2, 1, len(boxes)))
+                column_index += 2
+                continue
+            column_index += 1
+    return boxes
+
+def print_matrix(matrix, position, boxes):
+    box_positions = [(b.p.x, b.p.y) for b in boxes]
+
+    for line_index, line in enumerate(matrix):
+        string = []
+        for column_index, tile in enumerate(line):
+            if position.y == line_index and position.x == column_index:
+                string.append("@")
+            elif tile == wall:
+                string.append("#")
+            elif (column_index, line_index) in box_positions:
+                string.append("[")
+            elif (column_index-1, line_index) in box_positions:
+                string.append("]")
+            else:
+                string.append(".")
+        print("".join(string))
+
+def get_position_ahead(current_position, direction):
+    match direction:
+        case Direction.UP:
+            return Position(current_position.x, current_position.y-1)
+        case Direction.DOWN:
+            return Position(current_position.x, current_position.y+1)
+        case Direction.LEFT:
+            return Position(current_position.x-1, current_position.y)
+        case Direction.RIGHT:
+            return Position(current_position.x+1, current_position.y)
+
+def get_boxes_to_move(current_position, direction, matrix, boxes):
+    position_ahead = get_position_ahead(current_position, direction)
+
+    if matrix[position_ahead.y][position_ahead.x] == wall:
+        # None returned when chain cannot be moved
+        return None
+    else:
+        boxes_ahead = set()
+        for box in boxes:
+            is_within_width = position_ahead.x >= box.p.x and position_ahead.x < box.p.x+box.width
+            is_within_height = position_ahead.y >= box.p.y and position_ahead.y < box.p.y+box.height
+            if is_within_width and is_within_height:
+                boxes_ahead.add(box)
+
+        # print(f"boxes ahead: {boxes}")
+
+        if not boxes_ahead:
+            return []
+
+        further_positions = [] #represents the edges of the boxes ahead based on direction
+        for box in boxes_ahead:
+            match direction:
+                case Direction.UP:
+                    for x in range(box.p.x, box.p.x + box.width):
+                        further_positions.append(Position(x, box.p.y))
+                case Direction.DOWN:
+                    for x in range(box.p.x, box.p.x + box.width):
+                        further_positions.append(Position(x, box.p.y+box.height-1))
+                case Direction.LEFT:
+                    for y in range(box.p.y, box.p.y + box.height):
+                        further_positions.append(Position(box.p.x, y))
+                case Direction.RIGHT:
+                    for y in range(box.p.y, box.p.y + box.height):
+                        further_positions.append(Position(box.p.x+box.width-1, y))
+
+        further_boxes_ahead = [get_boxes_to_move(position, direction, matrix, boxes) for position in further_positions]
+
+        if None in further_boxes_ahead:
+            return None
+        else:
+            all_further_boxes = []
+            for boxes in further_boxes_ahead:
+                all_further_boxes += boxes
+            result = list(boxes_ahead) + all_further_boxes
+            return list(set(result))
+
+def make_move(current_position, direction, matrix, boxes):
+    boxes_to_move = get_boxes_to_move(current_position, direction, matrix, boxes)
+    if boxes_to_move is None:
+        # Ran into wall
+        return current_position
+    print(f"moving boxes: {sorted([box.id for box in boxes_to_move])}")
+    for box in boxes_to_move:
+        box.p = get_position_ahead(box.p, direction)
+
+    return get_position_ahead(current_position, direction)
+
+
+matrix_input = map_input.replace("#", "##").replace("O", "[]").replace(".", "..").replace("@", "@.")
+start_import = import_matrix(matrix_input.replace("[]", ".."))
+current_position = Position(start_import[0][1], start_import[0][0])
+room_layout = start_import[1]
+boxes = import_boxes(matrix_input)
+
+for direction in movements:
+    current_position = make_move(current_position, direction, room_layout, boxes)
+
+gps_sum = 0
+for box in boxes:
+    gps_sum += (100 * box.p.y) + box.p.x
+print(f"GPS: {gps_sum}")
 
 # Save timestamp
 end = time.time()
