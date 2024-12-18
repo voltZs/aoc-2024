@@ -120,81 +120,6 @@ def print_map(override_marks = set()):
                 string.append(".")
         print("".join(string))
 
-
-class TraversalNode:
-    def __init__(self, position, direction, cost_so_far, parent):
-        self.position = position
-        self.direction = direction
-        self.cost_so_far = cost_so_far
-        self.parent = parent
-
-    def __repr__(self):
-        return f"position: {self.position}, direction: {self.direction}, cost_so_far: {self.cost_so_far}, parent: {self.parent is not None}"
-
-    def __lt__(self, other):
-        return self.cost_so_far < other.cost_so_far
-
-def a_star():
-    open_list = []
-    open_list_weights = {}
-
-    heapq.heappush(open_list, TraversalNode(start, start_direction, 0, None))
-    open_list_weights[(start, start_direction)] = 0
-
-    while open_list:
-        current = heapq.heappop(open_list)
-        if open_list_weights.get((current.position, current.direction)):
-            open_list_weights.pop((current.position, current.direction))
-
-        if current.position == goal:
-            return build_path(current)
-
-        neighbors = get_neighbors(current.position)
-        for neighbor_position in neighbors:
-            distance_to_neighbor, new_direction = distance_and_direction(current.position, current.direction, neighbor_position)
-            cost_so_far = current.cost_so_far + distance_to_neighbor
-
-            existing = open_list_weights.get((neighbor_position, new_direction))
-            if existing and existing <= cost_so_far:
-                continue
-
-            successor = TraversalNode(neighbor_position, new_direction, cost_so_far, current)
-            heapq.heappush(open_list, successor)
-            open_list_weights[(neighbor_position, new_direction)] = cost_so_far
-    return None
-
-print("~~~~~~~~~~RESULT 1~~~~~~~~~~")
-# print(f"start: {start}")
-# print(f"end: {goal}")
-# a_best_path_length = a_star()[0].cost_so_far
-# print(a_best_path_length)
-
-# A* is super slow for this
-
-print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
-def find_all_paths_of_length(position, previous_position, direction, remaining_length):
-    if previous_position is not None and position == previous_position:
-        return None
-    if remaining_length < 0:
-        return None
-    if remaining_length == 0 and position == goal:
-        return [position]
-
-    neighbors = get_neighbors(position)
-
-    neighbor_paths = [] #arrays and None's
-    for neighbor in neighbors:
-        distance, new_direction = distance_and_direction(position, direction, neighbor)
-        paths = find_all_paths_of_length(neighbor, position, new_direction, remaining_length - distance)
-        neighbor_paths.append(paths)
-
-    valid_neighbor_paths = [path for path in neighbor_paths if path is not None and len(path) > 0]
-    result = []
-    for path in valid_neighbor_paths:
-        result.append(position)
-        result.extend(path)
-    return result
-
 def create_node_id(position, direction):
     return f"{position.x}-{position.y}-{direction}"
 
@@ -253,6 +178,14 @@ def dijkstra():
 
     return distances, came_from
 
+print("~~~~~~~~~~RESULT 1~~~~~~~~~~")
+dijkstra = dijkstra()
+goal_id = create_node_id(goal, Direction.UP).replace(f"{Direction.UP}", "")
+goal_distances_key_value = [(k, dijkstra[0][k]) for k in dijkstra[0].keys() if goal_id in k]
+solution_key_value = min(goal_distances_key_value, key = lambda kv: kv[1])
+print(solution_key_value)
+
+print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
 def id_to_position(id):
     id_arr = id.split("-")
     return Position(int(id_arr[0]), int(id_arr[1]))
@@ -268,12 +201,6 @@ def add_tree_positions(tree, set):
     set.add(tree["pos"])
     for branch in tree.get("prev", []):
         add_tree_positions(branch, set)
-
-dijkstra = dijkstra()
-goal_id = create_node_id(goal, Direction.UP).replace(f"{Direction.UP}", "")
-goal_distances_key_value = [(k, dijkstra[0][k]) for k in dijkstra[0].keys() if goal_id in k]
-solution_key_value = min(goal_distances_key_value, key = lambda kv: kv[1])
-print(solution_key_value)
 
 tree = dijkstra_came_from_tree(dijkstra[1], solution_key_value[0])
 all_positions = set()
