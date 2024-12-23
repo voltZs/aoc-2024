@@ -6,60 +6,74 @@ file = open("input.txt", "r")
 start_time = time.time()
 
 input_1, input_2 = file.read().split("\n\n")
+towels = input_1.split(", ")
+designs = input_2.split("\n")
 
-towels = [list(stripes) for stripes in input_1.split(", ")]
-towels_dict = {}
-for towel in towels:
-    stripes_count = len(towel)
-    existing = towels_dict.get(stripes_count)
-    if existing:
-        existing.append(towel)
-    else:
-        towels_dict[stripes_count] = [towel]
+known_impossible = set()
 
-designs =  [list(stripes) for stripes in input_2.split("\n")]
+def towels_from_string(towels):
+    return towels.split("_")
 
-known_solutions = {
+known_solutions = {}
 
-}
+def consume_next_stripes(towels, design, depth):
+    if len(design) == 0:
+        return []
 
+    if design in known_impossible:
+        return None
 
-def consume_next_stripes(towels, remaining_design):
-    if len(remaining_design) == 0:
-        return True
+    if design in known_solutions:
+        return known_solutions[design]
 
-    possible_next = [p for p in towels if remaining_design[:len(p)] == p]
+    possible_next = [t for t in towels if design.startswith(t)]
     if not possible_next:
-        return False
+        known_impossible.add(design)
+        return None
 
-    for pattern in possible_next:
-        remaining_pattern = remaining_design[len(pattern):]
-        known_solution = known_solutions.get(str(remaining_pattern))
-        if known_solution:
-            return known_solution
+    all_solutions_for_branch = []
 
-        if consume_next_stripes(towels, remaining_pattern):
-            known_solutions[str(remaining_pattern)] = True
-            return True
+    for towel in possible_next:
+        print(f"Checking towel {towel} for {design}")
+        remaining_pattern = design[len(towel):]
 
-    known_solutions[str(remaining_design)] = False
-    return False
+        towel_branch_solutions = consume_next_stripes(towels, remaining_pattern, depth+1)
+
+        if towel_branch_solutions is not None:
+            if len(towel_branch_solutions) == 0:
+                all_solutions_for_branch.append([towel])
+            else:
+                for towel_branch_solution in towel_branch_solutions:
+                    all_solutions_for_branch.append([towel] + towel_branch_solution)
+
+    # At this point we know all possible solutions for design
+    if not all_solutions_for_branch:
+        known_impossible.add(design)
+        return None
+    else:
+        known_solutions[design] = all_solutions_for_branch
+        return all_solutions_for_branch
+
 
 def check_design(design, towels):
-    return consume_next_stripes(towels, design)
+    return consume_next_stripes(towels, design, 0)
 
 
 print("~~~~~~~~~~RESULT 1~~~~~~~~~~")
-# possible = 0
-# for index, design in enumerate(designs):
-#     print(f"{index}/{len(design)}: {design}")
-#     is_doable = check_design(design, towels)
-#     possible += is_doable
+possible = 0
+sum = 0
 
-print(sum([check_design(design, towels) for design in designs]))
+for index, design in enumerate(designs):
+    result = check_design(design, towels)
+    print(f"{design}: {result}")
+    length = 0 if result is None else len(result)
+    possible += length != 0
+    sum += length
 
+print(possible)
 
 print("~~~~~~~~~~RESULT 2~~~~~~~~~~")
+print(sum)
 
 # Save timestamp
 end_time = time.time()
