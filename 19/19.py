@@ -16,57 +16,29 @@ def towels_from_string(towels):
 
 known_solutions = {}
 
-def consume_next_stripes(towels, design, depth):
+def consume_next_stripes(towels, design):
+    existing = known_solutions.get(design)
+    if existing:
+        return existing
+
     if len(design) == 0:
-        return []
-
-    if design in known_impossible:
-        return None
-
-    if design in known_solutions:
-        return known_solutions[design]
+        return 1
 
     possible_next = [t for t in towels if design.startswith(t)]
-    if not possible_next:
-        known_impossible.add(design)
-        return None
 
-    all_solutions_for_branch = []
-
+    sum = 0
     for towel in possible_next:
-        print(f"Checking towel {towel} for {design}")
-        remaining_pattern = design[len(towel):]
+        sum += consume_next_stripes(towels, design[len(towel):])
 
-        towel_branch_solutions = consume_next_stripes(towels, remaining_pattern, depth+1)
-
-        if towel_branch_solutions is not None:
-            if len(towel_branch_solutions) == 0:
-                all_solutions_for_branch.append([towel])
-            else:
-                for towel_branch_solution in towel_branch_solutions:
-                    all_solutions_for_branch.append([towel] + towel_branch_solution)
-
-    # At this point we know all possible solutions for design
-    if not all_solutions_for_branch:
-        known_impossible.add(design)
-        return None
-    else:
-        known_solutions[design] = all_solutions_for_branch
-        return all_solutions_for_branch
-
-
-def check_design(design, towels):
-    return consume_next_stripes(towels, design, 0)
-
+    known_solutions[design] = sum
+    return sum
 
 print("~~~~~~~~~~RESULT 1~~~~~~~~~~")
 possible = 0
 sum = 0
 
 for index, design in enumerate(designs):
-    result = check_design(design, towels)
-    print(f"{design}: {result}")
-    length = 0 if result is None else len(result)
+    length = consume_next_stripes(towels, design)
     possible += length != 0
     sum += length
 
